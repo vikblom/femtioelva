@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -16,12 +16,23 @@ type oAuth2Response struct {
 const KEY = "u0TPd1wPLc4_2P8JIofbIqfSn3Ia"
 const SECRET = "VnTZtM_dHUM2kwQN7CaEU0sPXaYa"
 
-func main() {
+func dumpResponse(resp *http.Response) error {
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	println(body)
+	return nil
+}
+
+func getAccessToken() string {
 	url := "https://api.vasttrafik.se/token"
 	secret := base64.URLEncoding.EncodeToString([]byte(KEY + ":" + SECRET))
 
-	//var jsonStr = []byte(`{"title":"Buy cheese and bread for breakfast."}`)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte("")))
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		panic(err)
+	}
 	// add headers
 	req.Header.Set("Authorization", "Basic "+secret)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -43,6 +54,38 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	println(authResp.AccessToken)
-	println(authResp.ExpiresIn)
+	if authResp.ExpiresIn < 60 {
+		panic("Token will expire in less than a minute!")
+	}
+	return authResp.AccessToken
+}
+
+func getStopId(stop, token string) int {
+	url := "https://api.vasttrafik.se/bin/rest.exe/v2/location.name"
+
+	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	q := req.URL.Query()
+	q.Add("format", "json")
+	q.Add("input", stop)
+	req.URL.RawQuery = q.Encode()
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	println(resp.Status)
+
+	//dumpResponse(resp)
+
+	return 0
+}
+
+func main() {
+	token := getAccessToken()
+	println(token)
+	println("Bearer " + token)
+	println(getStopId("svingeln", token))
 }
