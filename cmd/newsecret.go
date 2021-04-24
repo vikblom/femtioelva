@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"flag"
 	"fmt"
 	"io"
@@ -35,5 +34,5 @@ func main() {
 	if err != nil {
 		log.Fatal("Encryption error:", err)
 	}
-	fmt.Println(base64.StdEncoding.EncodeToString(cipher))
+	fmt.Println(cipher)
 }

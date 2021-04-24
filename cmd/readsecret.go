@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"flag"
 	"fmt"
 	"io"
@@ -31,12 +30,7 @@ func main() {
 		payload = string(payloadBytes)
 	}
 
-	cipher, err := base64.StdEncoding.DecodeString(payload)
-	if err != nil {
-		log.Fatal("Base64 encoding error:", err)
-	}
-
-	plain, err := femtioelva.Decrypt(cipher, key)
+	plain, err := femtioelva.Decrypt(payload, key)
 	if err != nil {
 		log.Fatal("Decryption error:", err)
 	}

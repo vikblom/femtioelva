@@ -3,6 +3,7 @@ package femtioelva
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"io"
 	"log"
@@ -27,16 +28,25 @@ func GenerateKey(passphrase string) [32]byte {
 	return key
 }
 
-func Encrypt(message string, key [32]byte) ([]byte, error) {
+// Encrypt message using key into base64 string.
+func Encrypt(message string, key [32]byte) (string, error) {
+
 	var nonce [24]byte
 	if _, err := io.ReadFull(rand.Reader, nonce[:]); err != nil {
-		return nil, err
+		return "", err
 	}
 	// Put the unique nonce at the beginning of the payload.
-	return secretbox.Seal(nonce[:], []byte(message), &nonce, &key), nil
+	cipher := secretbox.Seal(nonce[:], []byte(message), &nonce, &key)
+	return base64.StdEncoding.EncodeToString(cipher), nil
 }
 
-func Decrypt(cipher []byte, key [32]byte) (string, error) {
+// Decrypt payload base64 string using key, return plain text.
+func Decrypt(payload string, key [32]byte) (string, error) {
+
+	cipher, err := base64.StdEncoding.DecodeString(payload)
+	if err != nil {
+		return "", err
+	}
 
 	var decryptNonce [24]byte
 	copy(decryptNonce[:], cipher[:24])
