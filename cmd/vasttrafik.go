@@ -13,8 +13,8 @@ type oAuth2Response struct {
 	// other fields are not relevant yet.
 }
 
-const KEY = "u0TPd1wPLc4_2P8JIofbIqfSn3Ia"
-const SECRET = "VnTZtM_dHUM2kwQN7CaEU0sPXaYa"
+const KEY = "T8igmiNomuSwgxkbFf6fnj657iQa"
+const SECRET = "tAkH9PHj3UMWfQffiAwUK1c3Qv4a"
 
 func dumpResponse(resp *http.Response) error {
 	body, err := ioutil.ReadAll(resp.Body)
