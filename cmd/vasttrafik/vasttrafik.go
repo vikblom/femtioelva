@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"flag"
 	"net/http"
 	"os"
@@ -17,12 +18,12 @@ type oAuth2Response struct {
 	// other fields are not relevant yet.
 }
 
-func getAccessToken(apikey string) string {
+func getAccessToken(apikey string) (string, error) {
 
 	url := "https://api.vasttrafik.se/token"
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	// add headers
 	secret := base64.URLEncoding.EncodeToString([]byte(apikey))
@@ -38,25 +39,29 @@ func getAccessToken(apikey string) string {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	var authResp oAuth2Response
 	err = json.NewDecoder(resp.Body).Decode(&authResp)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	if authResp.ExpiresIn < 60 {
-		panic("Token will expire in less than a minute!")
+		return "", errors.New("token will expire in less than a minute")
 	}
-	return authResp.AccessToken
+	return authResp.AccessToken, nil
 }
 
-func getStopId(stop, token string) int {
+func getStopId(stop, token string) (int, error) {
 	url := "https://api.vasttrafik.se/bin/rest.exe/v2/location.name"
 
 	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return 0, err
+	}
+
 	req.Header.Set("Authorization", "Bearer "+token)
 	q := req.URL.Query()
 	q.Add("format", "json")
@@ -67,12 +72,12 @@ func getStopId(stop, token string) int {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 	defer resp.Body.Close()
 	log.Debug(resp.Status)
 
-	return 0
+	return 0, nil
 }
 
 func main() {
@@ -90,7 +95,15 @@ func main() {
 		log.Debug("Verbose prints enabled")
 	}
 
-	token := getAccessToken(strings.TrimSpace(apikey))
+	token, err := getAccessToken(strings.TrimSpace(apikey))
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Debug("Retrived token:", token)
-	log.Info("Svingeln has ID:", getStopId("svingeln", token))
+
+	id, err := getStopId("svingeln", token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Info("Svingeln has ID:", id)
 }
