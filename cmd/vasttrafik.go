@@ -3,25 +3,18 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"io/ioutil"
+	"flag"
 	"net/http"
 	"os"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type oAuth2Response struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int    `json:"expires_in"`
 	// other fields are not relevant yet.
-}
-
-func dumpResponse(resp *http.Response) error {
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	println(body)
-	return nil
 }
 
 func getAccessToken(apikey string) string {
@@ -41,7 +34,7 @@ func getAccessToken(apikey string) string {
 	q.Add("grant_type", "client_credentials")
 	req.URL.RawQuery = q.Encode()
 
-	println(req.URL.String())
+	log.Debug(req.URL.String())
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -70,16 +63,14 @@ func getStopId(stop, token string) int {
 	q.Add("input", stop)
 	req.URL.RawQuery = q.Encode()
 
-	println(req.URL.String())
+	log.Debug(req.URL.String())
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		panic(err)
 	}
 	defer resp.Body.Close()
-	println(resp.Status)
-
-	//dumpResponse(resp)
+	log.Debug(resp.Status)
 
 	return 0
 }
@@ -87,12 +78,19 @@ func getStopId(stop, token string) int {
 func main() {
 	apikey := os.Getenv("VASTTRAFIKAPI")
 	if apikey == "" {
-		println("Could not read API key from env: VASTTRAFIKAPI")
+		log.Fatal("Could not read API key from env: VASTTRAFIKAPI")
 		os.Exit(1)
 	}
 
+	verboseFlag := flag.Bool("v", false, "verbose logging")
+	flag.Parse()
+
+	if *verboseFlag {
+		log.SetLevel(log.DebugLevel)
+		log.Debug("Verbose prints enabled")
+	}
+
 	token := getAccessToken(strings.TrimSpace(apikey))
-	println(token)
-	println("Bearer " + token)
-	println(getStopId("svingeln", token))
+	log.Debug("Retrived token:", token)
+	log.Info("Svingeln has ID:", getStopId("svingeln", token))
 }

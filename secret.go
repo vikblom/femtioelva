@@ -6,8 +6,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	"log"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/scrypt"
 )
