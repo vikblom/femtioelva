@@ -11,6 +11,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	MINX = 11000000
+	MAXX = 13000000
+	MINY = 57000000
+	MAXY = 58000000
+)
+
 type oAuth2Response struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int    `json:"expires_in"`
@@ -86,10 +93,10 @@ type Vehicle struct {
 	Gid string
 
 	// X in Västtrafiks API.
-	Long float64
+	Long int
 
 	// Y in Västtrafiks API.
-	Lat float64
+	Lat int
 
 	// Common name of transport.
 	Name string
@@ -104,14 +111,14 @@ func GetVehicleLocations(token string) ([]Vehicle, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	strconv.Itoa(123)
 	req.Header.Set("Authorization", "Bearer "+token)
 	q := req.URL.Query()
 	q.Add("format", "json")
-	q.Add("minx", "11000000") // FIXME
-	q.Add("maxx", "13000000")
-	q.Add("miny", "57000000")
-	q.Add("maxy", "58000000")
+	q.Add("minx", strconv.Itoa(MINX))
+	q.Add("maxx", strconv.Itoa(MAXX))
+	q.Add("miny", strconv.Itoa(MINY))
+	q.Add("maxy", strconv.Itoa(MAXY))
 	q.Add("onlyRealtime", "yes")
 	req.URL.RawQuery = q.Encode()
 
@@ -156,8 +163,8 @@ func GetVehicleLocations(token string) ([]Vehicle, error) {
 
 		vs = append(vs, Vehicle{
 			Gid:  v.Gid,
-			Long: float64(x) / 1_000_000,
-			Lat:  float64(y) / 1_000_000,
+			Long: x,
+			Lat:  y,
 			Name: v.Name,
 			Time: time.Now(),
 		})

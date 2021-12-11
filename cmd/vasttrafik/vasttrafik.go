@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/gob"
 	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -31,28 +34,35 @@ func main() {
 	}
 	log.Debug("Retrived token:", token)
 
-	seen := make(map[string]femtioelva.Vehicle)
-	for {
+	// Ctrl-c should break the loop immediately.
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	alive := true
+	seen := []femtioelva.Vehicle{}
+	for alive {
 		vs, err := femtioelva.GetVehicleLocations(token)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Info("Livemap queried vehicles:", len(vs))
+		log.Infof("queried %d vehicle from livemap", len(vs))
+		seen = append(seen, vs...)
 
-		updated := 0
-		for _, v := range vs {
-			old, ok := seen[v.Gid]
-			if ok {
-				log.Debug("Already seen GID: ", v.Gid)
-				log.Debugf("OLD: %#v\n", old)
-				log.Debugf("NEW: %#v\n", v)
-			} else {
-				updated++
-				seen[v.Gid] = v
-			}
+		select {
+		case <-time.After(15 * time.Second):
+		case <-sigs:
+			alive = false
 		}
-		log.Info("Livemap updated vehicles:", updated)
+	}
 
-		time.Sleep(time.Minute)
+	// Dump history to gob before exiting.
+	file, err := os.Create("pos.gob")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	err = gob.NewEncoder(file).Encode(seen)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
