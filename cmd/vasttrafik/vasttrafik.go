@@ -48,6 +48,10 @@ func main() {
 		log.Infof("queried %d vehicle from livemap", len(vs))
 		seen = append(seen, vs...)
 
+		if len(seen) > 1_000_000 {
+			break
+		}
+
 		select {
 		case <-time.After(15 * time.Second):
 		case <-sigs:

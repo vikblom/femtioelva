@@ -12,10 +12,12 @@ import (
 )
 
 const (
-	MINX = 11000000
-	MAXX = 13000000
-	MINY = 57000000
-	MAXY = 58000000
+	// A square grid on top of Gothenburg
+	// FIXME: Calculate Lat/Long from sensible coordinate system.
+	MIN_LONG = 11000000
+	MAX_LONG = 13000000
+	MIN_LAT  = 57000000
+	MAX_LAT  = 58000000
 )
 
 type oAuth2Response struct {
@@ -92,10 +94,10 @@ type Vehicle struct {
 	// even if this is the same. Does it identify a vehicle?
 	Gid string
 
-	// X in Västtrafiks API.
+	// X in Västtrafiks API, increases east.
 	Long int
 
-	// Y in Västtrafiks API.
+	// Y in Västtrafiks API, increases north.
 	Lat int
 
 	// Common name of transport.
@@ -115,10 +117,10 @@ func GetVehicleLocations(token string) ([]Vehicle, error) {
 	req.Header.Set("Authorization", "Bearer "+token)
 	q := req.URL.Query()
 	q.Add("format", "json")
-	q.Add("minx", strconv.Itoa(MINX))
-	q.Add("maxx", strconv.Itoa(MAXX))
-	q.Add("miny", strconv.Itoa(MINY))
-	q.Add("maxy", strconv.Itoa(MAXY))
+	q.Add("minx", strconv.Itoa(MIN_LONG))
+	q.Add("maxx", strconv.Itoa(MAX_LONG))
+	q.Add("miny", strconv.Itoa(MIN_LAT))
+	q.Add("maxy", strconv.Itoa(MAX_LAT))
 	q.Add("onlyRealtime", "yes")
 	req.URL.RawQuery = q.Encode()
 
