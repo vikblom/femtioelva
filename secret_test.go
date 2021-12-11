@@ -1,23 +1,27 @@
-package femtioelva
+package femtioelva_test
 
-import "testing"
+import (
+	"testing"
 
-func TestRounTrip(t *testing.T) {
+	"github.com/vikblom/femtioelva"
+)
+
+func TestRoundTrip(t *testing.T) {
 	pass := "foo"
 	msg := "lorem ipsum"
 
-	key := GenerateKey(pass)
+	key := femtioelva.GenerateKey(pass)
 
-	cipher, err := Encrypt(msg, key)
+	cipher, err := femtioelva.Encrypt(msg, key)
 	if err != nil {
 		t.Fatal("Encryption error:", err)
 	}
-	out, err := Decrypt(cipher, key)
+	out, err := femtioelva.Decrypt(cipher, key)
 	if err != nil {
 		t.Fatal("Decryption error:", err)
 	}
 
-	if (out != msg) {
+	if out != msg {
 		t.Fatalf("Expected '%s' got '%s'\n", msg, out)
 	}
 
