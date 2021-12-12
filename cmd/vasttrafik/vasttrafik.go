@@ -38,22 +38,23 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
+	box := femtioelva.GeoBox(femtioelva.GBG_LAT, femtioelva.GBG_LON, 10_000)
+
 	alive := true
 	seen := []femtioelva.Vehicle{}
 	for alive {
-		vs, err := femtioelva.GetVehicleLocations(token)
+		vs, err := femtioelva.GetVehicleLocations(token, box)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Infof("queried %d vehicle from livemap", len(vs))
 		seen = append(seen, vs...)
-
+		log.Infof("accumulated %d samples from livemap", len(seen))
 		if len(seen) > 1_000_000 {
 			break
 		}
 
 		select {
-		case <-time.After(15 * time.Second):
+		case <-time.After(10 * time.Second):
 		case <-sigs:
 			alive = false
 		}

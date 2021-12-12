@@ -11,13 +11,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
+var (
 	// A square grid on top of Gothenburg
-	// FIXME: Calculate Lat/Long from sensible coordinate system.
-	MIN_LONG = 11000000
-	MAX_LONG = 13000000
-	MIN_LAT  = 57000000
-	MAX_LAT  = 58000000
+	box      = GeoBox(GBG_LAT, GBG_LON, 10_000)
+	MIN_LAT  = int(box.LowLat * 1_000_000)
+	MAX_LAT  = int(box.HighLat * 1_000_000)
+	MIN_LONG = int(box.LowLong * 1_000_000)
+	MAX_LONG = int(box.HighLong * 1_000_000)
 )
 
 type oAuth2Response struct {
@@ -107,7 +107,12 @@ type Vehicle struct {
 	Time time.Time
 }
 
-func GetVehicleLocations(token string) ([]Vehicle, error) {
+// VasttrafikCoord matches the API which uses stringed int millionths.
+func apiCoord(coord float64) string {
+	return strconv.Itoa(int(1e6 * coord))
+}
+
+func GetVehicleLocations(token string, box Box) ([]Vehicle, error) {
 	url := "https://api.vasttrafik.se/bin/rest.exe/v2/livemap"
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -117,10 +122,10 @@ func GetVehicleLocations(token string) ([]Vehicle, error) {
 	req.Header.Set("Authorization", "Bearer "+token)
 	q := req.URL.Query()
 	q.Add("format", "json")
-	q.Add("minx", strconv.Itoa(MIN_LONG))
-	q.Add("maxx", strconv.Itoa(MAX_LONG))
-	q.Add("miny", strconv.Itoa(MIN_LAT))
-	q.Add("maxy", strconv.Itoa(MAX_LAT))
+	q.Add("miny", apiCoord(box.LowLat))
+	q.Add("maxy", apiCoord(box.HighLat))
+	q.Add("minx", apiCoord(box.LowLong))
+	q.Add("maxx", apiCoord(box.HighLong))
 	q.Add("onlyRealtime", "yes")
 	req.URL.RawQuery = q.Encode()
 

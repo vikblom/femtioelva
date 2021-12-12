@@ -7,13 +7,14 @@ import (
 	"image/draw"
 	"image/png"
 	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/vikblom/femtioelva"
 )
 
-const (
+var (
 	IMGWIDTH  = 1024
 	IMGHEIGHT = 1024
 
@@ -47,6 +48,10 @@ func RetrievePositions() map[string]Path {
 
 	Paths := make(map[string]Path)
 	for _, v := range seen {
+		// Skip boats
+		if strings.Contains(v.Name, "Älv") {
+			continue
+		}
 		// scale and flip to img coordinates
 		north := (v.Lat - femtioelva.MIN_LAT) / HEIGHTSCALE
 		east := (v.Long - femtioelva.MIN_LONG) / WIDTHSCALE
@@ -63,7 +68,7 @@ func WriteImage(paths map[string]Path) {
 	// TODO: Draw positions
 	for _, ps := range paths {
 		for _, p := range ps {
-			r := image.Rect(p.x, p.y, p.x+2, p.y+2)
+			r := image.Rect(p.x, p.y, p.x+1, p.y+1)
 			draw.Draw(img, r, &image.Uniform{color.Black}, image.ZP, draw.Src)
 		}
 	}
