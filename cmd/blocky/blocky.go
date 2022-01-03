@@ -58,13 +58,15 @@ func RetrievePositions() []pos {
 }
 
 func Center(old []pos) ([]pos, float64, float64) {
-
-	minEast, minNorth := femtioelva.LatLong2UTM(femtioelva.BOX.LowLat, femtioelva.BOX.LowLong)
-	maxEast, maxNorth := femtioelva.LatLong2UTM(femtioelva.BOX.HighLat, femtioelva.BOX.HighLong)
+	box := femtioelva.GeoBox(femtioelva.GBG_LAT, femtioelva.GBG_LON, 10_000)
+	minEast, minNorth := femtioelva.LatLong2UTM(box.LowLat, box.LowLong)
+	maxEast, maxNorth := femtioelva.LatLong2UTM(box.HighLat, box.HighLong)
 
 	new := []pos{}
 	for _, v := range old {
-		new = append(new, pos{v.east - minEast, v.north - minNorth})
+		if minEast <= v.east && v.east <= maxEast && minNorth <= v.north && v.north <= maxNorth {
+			new = append(new, pos{v.east - minEast, v.north - minNorth})
+		}
 	}
 	return new, maxEast - minEast, maxNorth - minNorth
 }
@@ -85,16 +87,14 @@ func PosMatrix(ps []pos, n int, max float64) femtioelva.Matrix {
 	return m
 }
 
-func WriteMatrix(m femtioelva.Matrix, bs, margin int) {
+func DrawMatrix(m femtioelva.Matrix, bs, margin int) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0,
 		m.Width()*(bs+margin)+margin,
 		m.Height()*(bs+margin)+margin))
 	draw.Draw(img, img.Bounds(), &image.Uniform{color.White}, image.ZP, draw.Src)
-	file, err := os.Create("img.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
+
+	// Make the most popular spots completely dark
+	scale := float64(m.Max()) / 255.0
 
 	for row := 0; row < m.Height(); row++ {
 		for col := 0; col < m.Width(); col++ {
@@ -104,11 +104,21 @@ func WriteMatrix(m femtioelva.Matrix, bs, margin int) {
 			x0 := margin + row*(margin+bs)
 			y0 := margin + col*(margin+bs)
 			r := image.Rect(x0, y0, x0+bs, y0+bs)
-			draw.Draw(img, r, &image.Uniform{color.Black}, image.ZP, draw.Src)
+			val := 255 - uint8(float64(m.At(row, col))/scale) // Higher count -> darker
+			draw.Draw(img, r, &image.Uniform{color.Gray{val}}, image.ZP, draw.Src)
 		}
 	}
 
-	err = png.Encode(file, img)
+	return img
+}
+
+func WriteImage(img *image.RGBA, file string) {
+	fh, err := os.Create(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer fh.Close()
+	err = png.Encode(fh, img)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -124,6 +134,8 @@ func main() {
 	} else {
 		lim = height
 	}
-	m := PosMatrix(ps, 64, lim)
-	WriteMatrix(m, 8, 2)
+	m := PosMatrix(ps, 64+32, lim)
+	img := DrawMatrix(m, 8, 2)
+
+	WriteImage(img, "img.png")
 }

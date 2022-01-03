@@ -2,6 +2,7 @@ package femtioelva
 
 import (
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -55,4 +56,14 @@ func (m Matrix) Incr(row, col int) {
 func (m Matrix) Set(row, col, val int) {
 	index := row*m.cols + col
 	m.data[index] = val
+}
+
+func (m Matrix) Max() int {
+	max := math.MinInt
+	for _, v := range m.data {
+		if v > max {
+			max = v
+		}
+	}
+	return max
 }
