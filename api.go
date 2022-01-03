@@ -13,11 +13,12 @@ import (
 
 var (
 	// A square grid on top of Gothenburg
-	box      = GeoBox(GBG_LAT, GBG_LON, 10_000)
-	MIN_LAT  = int(box.LowLat * 1_000_000)
-	MAX_LAT  = int(box.HighLat * 1_000_000)
-	MIN_LONG = int(box.LowLong * 1_000_000)
-	MAX_LONG = int(box.HighLong * 1_000_000)
+	BOX = GeoBox(GBG_LAT, GBG_LON, 10_000)
+	// Used in render.go
+	MIN_LAT  = int(BOX.LowLat * 1_000_000)
+	MAX_LAT  = int(BOX.HighLat * 1_000_000)
+	MIN_LONG = int(BOX.LowLong * 1_000_000)
+	MAX_LONG = int(BOX.HighLong * 1_000_000)
 )
 
 type oAuth2Response struct {
