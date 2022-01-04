@@ -1,20 +1,21 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	fmt.Println("starting your http server!")
 	port := os.Getenv("PORT")
+
 	if port == "" {
 		log.Fatal("$PORT must be set")
 	}
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "homepage")
-	})
-	http.ListenAndServe(":"+port, nil)
+
+	router := gin.New()
+	router.Use(gin.Logger())
+	router.Static("/", "assets")
+	router.Run(":" + port)
 }
