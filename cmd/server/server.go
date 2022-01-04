@@ -4,6 +4,7 @@ import (
 	"flag"
 	"image/png"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"time"
 
@@ -82,7 +83,7 @@ func main() {
 	}()
 
 	// HTTP server
-	http.Handle("/", http.HandlerFunc(serveAssets))
-	http.Handle("/vasttrafik.png", http.HandlerFunc(serveGrid))
+	http.HandleFunc("/", serveAssets)
+	http.HandleFunc("/vasttrafik.png", serveGrid)
 	http.ListenAndServe("0.0.0.0:"+port, nil)
 }
