@@ -45,6 +45,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	port := os.Getenv("PORT") // Heroku requirement
+	if apikey == "" {
+		log.Debug("Could not read API key from env: VASTTRAFIKAPI")
+		port = "8080"
+	}
+
 	verboseFlag := flag.Bool("v", false, "verbose logging")
 	flag.Parse()
 
@@ -78,5 +84,5 @@ func main() {
 	// HTTP server
 	http.Handle("/", http.HandlerFunc(serveAssets))
 	http.Handle("/vasttrafik.png", http.HandlerFunc(serveGrid))
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":"+port, nil)
 }
