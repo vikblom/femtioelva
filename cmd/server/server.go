@@ -55,7 +55,7 @@ func main() {
 
 	port := os.Getenv("PORT") // Heroku requirement
 	if port == "" {
-		log.Fatal("Must set $PORT")
+		port = "8080"
 	}
 	log.Debug("port:", port)
 
@@ -85,5 +85,4 @@ func main() {
 	http.Handle("/", http.HandlerFunc(serveAssets))
 	http.Handle("/vasttrafik.png", http.HandlerFunc(serveGrid))
 	http.ListenAndServe("0.0.0.0:"+port, nil)
-
 }

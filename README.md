@@ -3,8 +3,12 @@
 ## TODO
 
 - Use different boxes for collection and rendering.
-- Render as heatmap.
-  Accumulate occurences in a grid and make a gridwise drawing.
 - Render as particles.
   Smoothing through simple greyscale?
-- Setup API type.
+
+# Heroku
+
+Deploy by pushing to Heroku main.
+
+NOTE: One gotcha was that ListenAndServe must have "0.0.0.0", else Herokus routing will not pick it up.
+This is different in std HTTP and Gin.
