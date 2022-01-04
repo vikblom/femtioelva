@@ -13,10 +13,11 @@ var (
 )
 
 type Box struct {
-	LowLat   float64
-	LowLong  float64
-	HighLat  float64
-	HighLong float64
+	LowLat     float64
+	LowLong    float64
+	HighLat    float64
+	HighLong   float64
+	sideLength float64
 }
 
 func LatLong2UTM(lat, long float64) (east float64, north float64) {
@@ -40,5 +41,5 @@ func GeoBox(lat, long, width float64) Box {
 	// top right
 	highLat, highLong := UTM2LatLong(east+width/2, north+width/2)
 
-	return Box{LowLat: lowLat, LowLong: lowLong, HighLat: highLat, HighLong: highLong}
+	return Box{LowLat: lowLat, LowLong: lowLong, HighLat: highLat, HighLong: highLong, sideLength: width}
 }
