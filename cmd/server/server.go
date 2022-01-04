@@ -39,18 +39,6 @@ func serveAssets(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	apikey := os.Getenv("VASTTRAFIKAPI")
-	if apikey == "" {
-		log.Fatal("Could not read API key from env: VASTTRAFIKAPI")
-		os.Exit(1)
-	}
-
-	port := os.Getenv("PORT") // Heroku requirement
-	if apikey == "" {
-		log.Debug("Could not read API key from env: VASTTRAFIKAPI")
-		port = "8080"
-	}
-
 	verboseFlag := flag.Bool("v", false, "verbose logging")
 	flag.Parse()
 
@@ -58,6 +46,18 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 		log.Debug("Verbose prints enabled")
 	}
+
+	apikey := os.Getenv("VASTTRAFIKAPI")
+	if apikey == "" {
+		log.Fatal("Could not read API key from env: VASTTRAFIKAPI")
+		os.Exit(1)
+	}
+
+	port := os.Getenv("PORT") // Heroku requirement
+	if port == "" {
+		port = "8080"
+	}
+	log.Debug("port:", port)
 
 	token, err := femtioelva.GetAccessToken(apikey)
 	if err != nil {
@@ -85,4 +85,5 @@ func main() {
 	http.Handle("/", http.HandlerFunc(serveAssets))
 	http.Handle("/vasttrafik.png", http.HandlerFunc(serveGrid))
 	http.ListenAndServe(":"+port, nil)
+
 }
