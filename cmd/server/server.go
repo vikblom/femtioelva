@@ -86,4 +86,5 @@ func main() {
 	http.Handle("/vasttrafik.png", http.HandlerFunc(serveGrid))
 	http.ListenAndServe(":"+port, nil)
 
+	select {}
 }
