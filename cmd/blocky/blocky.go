@@ -14,14 +14,6 @@ import (
 	"github.com/vikblom/femtioelva"
 )
 
-var (
-	IMGWIDTH  = 1024
-	IMGHEIGHT = 1024
-
-	WIDTHSCALE  = (femtioelva.MAX_LONG - femtioelva.MIN_LONG) / IMGWIDTH
-	HEIGHTSCALE = (femtioelva.MAX_LAT - femtioelva.MIN_LAT) / IMGHEIGHT
-)
-
 type pos struct {
 	east  float64
 	north float64
@@ -44,16 +36,13 @@ func RetrievePositions() []pos {
 
 	positions := []pos{}
 	for _, v := range seen {
-
 		// Skip boats
 		if strings.Contains(v.Name, "Älv") {
 			continue
 		}
-
 		east, north := femtioelva.LatLong2UTM(float64(v.Lat)/1_000_000, float64(v.Long)/1_000_000)
 		positions = append(positions, pos{east, north})
 	}
-
 	return positions
 }
 

@@ -4,7 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -14,11 +17,6 @@ import (
 var (
 	// A square grid on top of Gothenburg
 	BOX = GeoBox(GBG_LAT, GBG_LON, 10_000)
-	// Used in render.go
-	MIN_LAT  = int(BOX.LowLat * 1_000_000)
-	MAX_LAT  = int(BOX.HighLat * 1_000_000)
-	MIN_LONG = int(BOX.LowLong * 1_000_000)
-	MAX_LONG = int(BOX.HighLong * 1_000_000)
 )
 
 type oAuth2Response struct {
@@ -27,27 +25,54 @@ type oAuth2Response struct {
 	// other fields are not relevant yet.
 }
 
-func GetAccessToken(apikey string) (string, error) {
-	url := "https://api.vasttrafik.se/token"
-	req, err := http.NewRequest("POST", url, nil)
-	if err != nil {
-		return "", err
+// apiCall wraps the vasttrafik API, does basic error checking on the response.
+// If the response is non-nil, the caller is responsible for closing its body.
+func apiCall(method, path string, headers, params map[string]string) (*http.Response, error) {
+	url := &url.URL{
+		Scheme: "https",
+		Host:   "api.vasttrafik.se",
+		Path:   path,
 	}
-
-	// headers
-	secret := base64.URLEncoding.EncodeToString([]byte(apikey))
-	req.Header.Set("Authorization", "Basic "+secret)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// params
+	req, err := http.NewRequest(method, url.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
 	q := req.URL.Query()
-	q.Add("format", "json")
-	q.Add("grant_type", "client_credentials")
+	for k, v := range params {
+		q.Add(k, v)
+	}
 	req.URL.RawQuery = q.Encode()
 
-	// request
+	// request - let caller check error and defer close
 	log.Debug(req.URL.String())
 	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return resp, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		raw, _ := io.ReadAll(resp.Body)
+		log.Debug(string(raw))
+		resp.Body.Close()
+		return nil, fmt.Errorf("HTTP request not ok: %s", resp.Status)
+	}
+	return resp, nil
+}
+
+func GetAccessToken(apikey string) (string, error) {
+	secret := base64.URLEncoding.EncodeToString([]byte(apikey))
+	headers := map[string]string{
+		"Authorization": "Basic " + secret,
+		"Content-Type":  "application/x-www-form-urlencoded",
+	}
+
+	params := map[string]string{
+		"format":     "json",
+		"grant_type": "client_credentials",
+	}
+	resp, err := apiCall(http.MethodPost, "token", headers, params)
 	if err != nil {
 		return "", err
 	}
@@ -63,30 +88,6 @@ func GetAccessToken(apikey string) (string, error) {
 		return "", errors.New("token will expire in less than a minute")
 	}
 	return authResp.AccessToken, nil
-}
-
-func GetStopId(stop, token string) (int, error) {
-	url := "https://api.vasttrafik.se/bin/rest.exe/v2/location.name"
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return 0, err
-	}
-
-	req.Header.Set("Authorization", "Bearer "+token)
-	q := req.URL.Query()
-	q.Add("format", "json")
-	q.Add("input", stop)
-	req.URL.RawQuery = q.Encode()
-
-	log.Debug(req.URL.String())
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
-	log.Debug(resp.Status)
-
-	return 0, nil
 }
 
 type Vehicle struct {
@@ -114,29 +115,24 @@ func apiCoord(coord float64) string {
 }
 
 func GetVehicleLocations(token string, box Box) ([]Vehicle, error) {
-	url := "https://api.vasttrafik.se/bin/rest.exe/v2/livemap"
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
+	headers := map[string]string{
+		"Authorization": "Bearer " + token,
 	}
-	strconv.Itoa(123)
-	req.Header.Set("Authorization", "Bearer "+token)
-	q := req.URL.Query()
-	q.Add("format", "json")
-	q.Add("miny", apiCoord(box.LowLat))
-	q.Add("maxy", apiCoord(box.HighLat))
-	q.Add("minx", apiCoord(box.LowLong))
-	q.Add("maxx", apiCoord(box.HighLong))
-	q.Add("onlyRealtime", "yes")
-	req.URL.RawQuery = q.Encode()
+	log.Info(headers)
 
-	log.Debug(req.URL.String())
-	resp, err := http.DefaultClient.Do(req)
+	params := map[string]string{
+		"format":       "json",
+		"miny":         apiCoord(box.LowLat),
+		"maxy":         apiCoord(box.HighLat),
+		"minx":         apiCoord(box.LowLong),
+		"maxx":         apiCoord(box.HighLong),
+		"onlyRealtime": "yes",
+	}
+	resp, err := apiCall(http.MethodGet, "bin/rest.exe/v2/livemap", headers, params)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	log.Debug(resp.Status)
 
 	// Decode JSON with some anon. structs.
 	type VehicleJSON struct {
