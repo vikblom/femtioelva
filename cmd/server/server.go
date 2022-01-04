@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/vikblom/femtioelva"
@@ -19,23 +20,23 @@ var (
 	grid = femtioelva.NewGrid(box, 96)
 )
 
-func serveGrid(w http.ResponseWriter, request *http.Request) {
-	if request.Method != http.MethodGet {
-		log.Errorf("serveGrid got a %s request", request.Method)
-		w.WriteHeader(http.StatusBadRequest)
+func serveGrid(c *gin.Context) {
+	if c.Request.Method != http.MethodGet {
+		log.Errorf("serveGrid got a %s request", c.Request.Method)
+		c.Writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	img := grid.Draw(8, 2) // TODO: Move graphic options to Grid
-	err := png.Encode(w, img)
+	err := png.Encode(c.Writer, img)
 	if err != nil {
 		log.Errorf("encoding png failed: %w", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		c.Writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
 
-func serveAssets(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "assets")
+func serveAssets(c *gin.Context) {
+	c.File("assets/index.html")
 }
 
 func main() {
@@ -82,9 +83,10 @@ func main() {
 	}()
 
 	// HTTP server
-	http.Handle("/", http.HandlerFunc(serveAssets))
-	http.Handle("/vasttrafik.png", http.HandlerFunc(serveGrid))
-	http.ListenAndServe(":"+port, nil)
+	router := gin.Default()
+	router.GET("/", serveAssets)
+	router.GET("/vasttrafik.png", serveGrid)
+	router.Run(":" + port)
 
 	select {}
 }
