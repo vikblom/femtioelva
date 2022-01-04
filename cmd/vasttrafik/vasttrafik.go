@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/gob"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 	"time"
 
@@ -27,6 +29,13 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 		log.Debug("Verbose prints enabled")
 	}
+
+	if flag.NArg() == 0 {
+		fmt.Println("usage: vasttrafik [path to .gob]")
+		os.Exit(1)
+	}
+	gobfile := flag.Args()[0]
+	log.Debug("Will write data to ", gobfile)
 
 	token, err := femtioelva.GetAccessToken(apikey)
 	if err != nil {
@@ -61,7 +70,11 @@ func main() {
 	}
 
 	// Dump history to gob before exiting.
-	file, err := os.Create("pos.gob")
+	err = os.MkdirAll(path.Dir(gobfile), 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+	file, err := os.Create(gobfile)
 	if err != nil {
 		log.Fatal(err)
 	}

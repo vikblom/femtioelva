@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/gob"
+	"flag"
+	"fmt"
 	"image"
 	"image/png"
 	"os"
@@ -12,8 +14,8 @@ import (
 	"github.com/vikblom/femtioelva"
 )
 
-func AddPositionsToGrid(grid femtioelva.Grid) {
-	file, err := os.Open("pos.gob")
+func AddPositionsToGrid(gobfile string, grid femtioelva.Grid) {
+	file, err := os.Open(gobfile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,10 +51,18 @@ func WriteImage(img image.Image, file string) {
 }
 
 func main() {
+	flag.Parse()
+	if flag.NArg() != 2 {
+		fmt.Println("usage: blocky [path to .gob] [path to .png]")
+		os.Exit(1)
+	}
+	gobfile := flag.Args()[0]
+	pngfile := flag.Args()[1]
+
 	box := femtioelva.GeoBox(femtioelva.GBG_LAT, femtioelva.GBG_LON, 5_000)
 	grid := femtioelva.NewGrid(box, 96)
-	AddPositionsToGrid(grid)
+	AddPositionsToGrid(gobfile, grid)
 	img := grid.Draw(8, 2)
 
-	WriteImage(img, "img.png")
+	WriteImage(img, pngfile)
 }
