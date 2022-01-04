@@ -96,11 +96,11 @@ type Vehicle struct {
 	// even if this is the same. Does it identify a vehicle?
 	Gid string
 
-	// X in Västtrafiks API, increases east.
-	Long int
+	// "Y*1e6" in Västtrafiks API, increases north.
+	Lat float64
 
-	// Y in Västtrafiks API, increases north.
-	Lat int
+	// "X*1e6" in Västtrafiks API, increases east.
+	Long float64
 
 	// Common name of transport.
 	Name string
@@ -156,6 +156,7 @@ func GetVehicleLocations(token string, box Box) ([]Vehicle, error) {
 	vs := []Vehicle{}
 	for _, v := range lm.Livemap.Vehicles {
 
+		// Store as the actual Long/Lat
 		x, err := strconv.Atoi(v.X)
 		if err != nil {
 			return nil, err
@@ -167,8 +168,8 @@ func GetVehicleLocations(token string, box Box) ([]Vehicle, error) {
 
 		vs = append(vs, Vehicle{
 			Gid:  v.Gid,
-			Long: x,
-			Lat:  y,
+			Lat:  float64(y) * 1e-6,
+			Long: float64(x) * 1e-6,
 			Name: v.Name,
 			Time: time.Now(),
 		})

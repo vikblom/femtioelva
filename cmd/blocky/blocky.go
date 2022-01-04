@@ -14,13 +14,13 @@ import (
 	"github.com/vikblom/femtioelva"
 )
 
-type pos struct {
+type utm struct {
 	east  float64
 	north float64
 }
 
 // RetrievePositions of one vehicle
-func RetrievePositions() []pos {
+func RetrievePositions() []utm {
 	file, err := os.Open("pos.gob")
 	if err != nil {
 		log.Fatal(err)
@@ -34,33 +34,33 @@ func RetrievePositions() []pos {
 	}
 	log.Info(len(seen))
 
-	positions := []pos{}
+	positions := []utm{}
 	for _, v := range seen {
 		// Skip boats
 		if strings.Contains(v.Name, "Älv") {
 			continue
 		}
-		east, north := femtioelva.LatLong2UTM(float64(v.Lat)/1_000_000, float64(v.Long)/1_000_000)
-		positions = append(positions, pos{east, north})
+		east, north := femtioelva.LatLong2UTM(v.Lat, v.Long)
+		positions = append(positions, utm{east, north})
 	}
 	return positions
 }
 
-func Center(old []pos) ([]pos, float64, float64) {
+func Center(old []utm) ([]utm, float64, float64) {
 	box := femtioelva.GeoBox(femtioelva.GBG_LAT, femtioelva.GBG_LON, 10_000)
 	minEast, minNorth := femtioelva.LatLong2UTM(box.LowLat, box.LowLong)
 	maxEast, maxNorth := femtioelva.LatLong2UTM(box.HighLat, box.HighLong)
 
-	new := []pos{}
+	new := []utm{}
 	for _, v := range old {
 		if minEast <= v.east && v.east <= maxEast && minNorth <= v.north && v.north <= maxNorth {
-			new = append(new, pos{v.east - minEast, v.north - minNorth})
+			new = append(new, utm{v.east - minEast, v.north - minNorth})
 		}
 	}
 	return new, maxEast - minEast, maxNorth - minNorth
 }
 
-func PosMatrix(ps []pos, n int, max float64) femtioelva.Matrix {
+func PosMatrix(ps []utm, n int, max float64) femtioelva.Matrix {
 	m := femtioelva.NewMatrix(n, n)
 
 	d := max / float64(n) // size of each cell
