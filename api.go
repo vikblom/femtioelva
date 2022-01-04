@@ -118,7 +118,6 @@ func GetVehicleLocations(token string, box Box) ([]Vehicle, error) {
 	headers := map[string]string{
 		"Authorization": "Bearer " + token,
 	}
-	log.Info(headers)
 
 	params := map[string]string{
 		"format":       "json",
