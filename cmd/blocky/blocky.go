@@ -36,7 +36,7 @@ func AddPositionsToGrid(grid femtioelva.Grid) {
 	}
 }
 
-func WriteImage(img *image.RGBA, file string) {
+func WriteImage(img image.Image, file string) {
 	fh, err := os.Create(file)
 	if err != nil {
 		log.Fatal(err)

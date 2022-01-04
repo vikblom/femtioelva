@@ -94,8 +94,8 @@ func (g Grid) IncrUTM(east, north float64) {
 }
 
 // Draw grid with cell and margin pixel size as given.
-func (g Grid) Draw(cell, margin int) *image.RGBA {
-	img := image.NewRGBA(image.Rect(0, 0,
+func (g Grid) Draw(cell, margin int) *image.Gray {
+	img := image.NewGray(image.Rect(0, 0,
 		g.Width()*(cell+margin)+margin,
 		g.Height()*(cell+margin)+margin))
 	draw.Draw(img, img.Bounds(), &image.Uniform{color.White}, image.ZP, draw.Src)
