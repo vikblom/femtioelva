@@ -1,14 +1,10 @@
 # femtioelva
+Web experiment on top of Västtrafiks REST API.
 
-## TODO
-
-- Use different boxes for collection and rendering.
-- Render as particles.
-  Smoothing through simple greyscale?
+Accumulates location of public transit and renders that information as a heatmap.
 
 # Heroku
+Deployed as [femtioelva](https://femtioelva.herokuapp.com/) herokuapp.
 
-Deploy by pushing to Heroku main.
-
-NOTE: One gotcha was that ListenAndServe must have "0.0.0.0", else Herokus routing will not pick it up.
-This is different in std HTTP and Gin.
+Server state will reset if Dyno is reset.
+Deploy by pushing to Heroku branch `main`.
