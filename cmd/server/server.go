@@ -29,7 +29,7 @@ func serveGrid(w http.ResponseWriter, request *http.Request) {
 	img := grid.Draw(8, 2) // TODO: Move graphic options to Grid
 	err := png.Encode(w, img)
 	if err != nil {
-		log.Errorf("encoding png failed: %w", err)
+		log.Errorf("encoding png failed: %s", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -54,7 +54,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	port := os.Getenv("PORT") // Heroku requirement
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
